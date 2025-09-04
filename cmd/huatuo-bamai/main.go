@@ -16,6 +16,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -37,6 +38,8 @@ import (
 	"huatuo-bamai/internal/utils/executil"
 	"huatuo-bamai/internal/utils/pidutil"
 	"huatuo-bamai/pkg/tracing"
+
+	_ "net/http/pprof"
 
 	"github.com/urfave/cli/v2"
 )
@@ -118,6 +121,9 @@ func mainAction(ctx *cli.Context) error {
 		return err
 	}
 
+	// open pprof（default: 6060 port）
+	go startPprofServer("localhost:6060")
+
 	log.Infof("Initialize the Metrics collector: %v", prom)
 	services.Start(conf.Get().APIServer.TCPAddr, mgr, prom)
 
@@ -185,6 +191,13 @@ func buildOptionDir(optionDir string, ctx *cli.Context) string {
 	}
 
 	return filepath.Join(runningDir, "../", dir)
+}
+
+func startPprofServer(addr string) {
+	log.Infof("listening at http://%s/debug/pprof/", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		log.Errorf("server error: %v", err)
+	}
 }
 
 func main() {
