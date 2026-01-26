@@ -21,7 +21,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/sirupsen/logrus"
+	logrus "github.com/sirupsen/logrus"
 )
 
 // Test SetLevel and GetLevel behavior (valid, invalid, case-insensitive)
