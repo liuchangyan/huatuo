@@ -23,10 +23,10 @@ import (
 type Return int32
 
 const (
-	Success Return = iota
-	ErrorFailed
-	ErrorNoDevice
-	ErrorNotSupported
+	Success           Return = iota // 0: Success
+	_Reserved1                      // 1: Reserved
+	_Reserved2                      // 2: Reserved
+	ErrorNotSupported               // 3: Operation not supported
 )
 
 // String returns the string representation of a Return.
