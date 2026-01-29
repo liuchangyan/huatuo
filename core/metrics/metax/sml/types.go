@@ -16,6 +16,7 @@ package sml
 
 import (
 	"huatuo-bamai/core/metrics/metax/device"
+	"huatuo-bamai/core/metrics/metax/gpu"
 )
 
 /*
@@ -39,25 +40,9 @@ type SmlMetaXLinkBandwidth struct {
 }
 
 type SmlDeviceUnavailableReasonInfo struct {
-	unavailableCode   int32
-	unavailableReason [64]byte
+	unavailableCode int32
+	_               [64]byte // unavailableReason, not used yet.
 }
-
-type SmlTemperatureSensor uint32
-
-const (
-	SmlTemperatureSensorHotspot SmlTemperatureSensor = iota
-)
-
-type SmlUsageIp uint32
-
-const (
-	SmlUsageIpDla SmlUsageIp = iota // MetaxSmlUsageIpDla only valid for metaxSmlDeviceBrandN.
-	SmlUsageIpVpue
-	SmlUsageIpVpud
-	SmlUsageIpG2d   // MetaxSmlUsageIpG2d only valid for metaxSmlDeviceBrandN.
-	SmlUsageIpXcore // MetaxSmlUsageIpXcore only valid for metaxSmlDeviceBrandC.
-)
 
 type SmlMemoryInfo struct {
 	_         int64 // visVramTotal in KB, not used yet.
@@ -66,77 +51,6 @@ type SmlMemoryInfo struct {
 	vramUse   int64 // vramUse in KB.
 	_         int64 // xttTotal in KB, not used yet.
 	_         int64 // xttUse in KB, not used yet.
-}
-
-type SmlClockIp uint32
-
-const (
-	SmlClockIpCsc SmlClockIp = iota
-	SmlClockIpDla
-	SmlClockIpMc
-	SmlClockIpMc0
-	SmlClockIpMc1
-	SmlClockIpVpue
-	SmlClockIpVpud
-	SmlClockIpSoc
-	SmlClockIpDnoc
-	SmlClockIpG2d
-	SmlClockIpCcx
-	SmlClockIpXcore
-)
-
-type SmlDpmIp uint32
-
-const (
-	SmlDpmIpDla SmlDpmIp = iota
-	SmlDpmIpXcore
-	SmlDpmIpMc
-	SmlDpmIpSoc
-	SmlDpmIpDnoc
-	SmlDpmIpVpue
-	SmlDpmIpVpud
-	SmlDpmIpHbm
-	SmlDpmIpG2d
-	SmlDpmIpHbmPower
-	SmlDpmIpCcx
-	SmlDpmIpIpGroup
-	SmlDpmIpDma
-	SmlDpmIpCsc
-	SmlDpmIpEth
-	SmlDpmIpDidt
-	SmlDpmIpReserved
-)
-
-var (
-	GpuUtilizationIpMap = map[string]SmlUsageIp{
-		"encoder": SmlUsageIpVpue,
-		"decoder": SmlUsageIpVpud,
-		"xcore":   SmlUsageIpXcore,
-	}
-	GpuClockIpMap = map[string]SmlClockIp{
-		"encoder": SmlClockIpVpue,
-		"decoder": SmlClockIpVpud,
-		"xcore":   SmlClockIpXcore,
-		"memory":  SmlClockIpMc0,
-	}
-	GpuDpmIpMap = map[string]SmlDpmIp{
-		"xcore": SmlDpmIpXcore,
-	}
-)
-
-var GpuClocksThrottleBitReasonMap = map[int]string{
-	1:  "idle",
-	2:  "application_limit",
-	3:  "over_power",
-	4:  "chip_overheated",
-	5:  "vr_overheated",
-	6:  "hbm_overheated",
-	7:  "thermal_overheated",
-	8:  "pcc",
-	9:  "power_brake",
-	10: "didt",
-	11: "low_usage",
-	12: "other",
 }
 
 /*
@@ -151,33 +65,33 @@ var (
 	// MACA module symbols
 	mxSmlGetMacaVersion func(*byte, *uint32) Return
 
-	// Device information symbols
+	// Device symbols
 	mxSmlGetDeviceCount    func() uint32
 	mxSmlGetPfDeviceCount  func() uint32
 	mxSmlGetDeviceInfo     func(uint32, *device.Info) Return
 	mxSmlGetDeviceDieCount func(uint32, *uint32) Return
 	mxSmlGetDeviceVersion  func(uint32, device.DeviceVersionUnit, *byte, *uint32) Return
 
-	// Board power information symbols
+	// Board power symbols
 	mxSmlGetBoardPowerInfo func(uint32, *uint32, *SmlBoardWayElectricInfo) Return
 
-	// PCIe information symbols
+	// PCIe symbols
 	mxSmlGetPcieInfo       func(uint32, *SmlPcieInfo) Return
 	mxSmlGetPcieThroughput func(uint32, *SmlPcieThroughput) Return
 
-	// MetaXLink symbols (similar to NVLink)
+	// MetaXLink symbols
 	mxSmlGetMetaXLinkInfo_v2     func(uint32, *uint32, *SmlSingleMetaXLinkInfo) Return
 	mxSmlGetMetaXLinkBandwidth   func(uint32, device.MetaXLinkType, *uint32, *SmlMetaXLinkBandwidth) Return
 	mxSmlGetMetaXLinkTrafficStat func(uint32, device.MetaXLinkType, *uint32, *SmlMetaXLinkTrafficStat) Return
 	mxSmlGetMetaXLinkAer         func(uint32, *uint32, *SmlMetaXLinkAer) Return
 
-	// Die information symbols
+	// Die symbols
 	mxSmlGetDieUnavailableReason           func(uint32, uint32, *SmlDeviceUnavailableReasonInfo) Return
-	mxSmlGetDieTemperatureInfo             func(uint32, uint32, SmlTemperatureSensor, *int32) Return
-	mxSmlGetDieIpUsage                     func(uint32, uint32, SmlUsageIp, *int32) Return
+	mxSmlGetDieTemperatureInfo             func(uint32, uint32, gpu.TemperatureSensor, *int32) Return
+	mxSmlGetDieIpUsage                     func(uint32, uint32, gpu.UsageIp, *int32) Return
 	mxSmlGetDieMemoryInfo                  func(uint32, uint32, *SmlMemoryInfo) Return
-	mxSmlGetDieClocks                      func(uint32, uint32, SmlClockIp, *uint32, *uint32) Return
+	mxSmlGetDieClocks                      func(uint32, uint32, gpu.ClockIp, *uint32, *uint32) Return
 	mxSmlGetDieCurrentClocksThrottleReason func(uint32, uint32, *uint64) Return
-	mxSmlGetCurrentDieDpmIpPerfLevel       func(uint32, uint32, SmlDpmIp, *uint32) Return
+	mxSmlGetCurrentDieDpmIpPerfLevel       func(uint32, uint32, gpu.DpmIp, *uint32) Return
 	mxSmlGetDieTotalEccErrors              func(uint32, uint32, *SmlEccErrorCount) Return
 )

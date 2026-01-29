@@ -1,7 +1,6 @@
 package sml
 
-// sml.Init()
-// Init load and initializes the MetaX SML library.
+// sml.Init() load and initializes the MetaX SML library.
 func Init() error {
 	if err := libsml.load(); err != nil {
 		return err
@@ -9,8 +8,7 @@ func Init() error {
 	return checkReturnCode("mxSmlInit", mxSmlInit())
 }
 
-// sml.Shutdown()
-// Shutdown shuts down the MetaX SML library.
+// sml.Shutdown() shuts down the MetaX SML library.
 func Shutdown() error {
 	return libsml.close()
 }

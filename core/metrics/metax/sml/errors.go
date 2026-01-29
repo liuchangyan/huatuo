@@ -19,28 +19,55 @@ import (
 	"fmt"
 )
 
+type Return int32
+
+const (
+	Success Return = iota
+	ErrorFailed
+	ErrorNoDevice
+	ErrorNotSupported
+)
+
+// String returns the string representation of a Return.
+func (r Return) String() string {
+	return r.Error()
+}
+
+// Error returns the string representation of a Return.
+func (r Return) Error() string {
+	return errorStringFunc(r)
+}
+
+// errorStringFunc can be assigned if the system metax-sml library is in use.
+var errorStringFunc = defaultErrorStringFunc
+
+// defaultErrorStringFunc provides a basic implementation for Return string representation.
+var defaultErrorStringFunc = func(r Return) string {
+	return mxSmlGetErrorString(r)
+}
+
 type SmlError struct {
-	fn   string
-	Code Return
+	symbol string
+	code   Return
 }
 
 func (e *SmlError) Error() string {
-	return fmt.Sprintf("%s failed: %s", e.fn, e.Code.String())
+	return fmt.Sprintf("%s failed: %s", e.symbol, e.code.Error())
 }
 
 func IsNotSupported(err error) bool {
 	var smlErr *SmlError
 	return errors.As(err, &smlErr) &&
-		smlErr.Code == ERROR_OPERATION_NOT_SUPPORTED
+		smlErr.code == ErrorNotSupported
 }
 
-func checkReturnCode(operation string, code Return) error {
-	if code == SUCCESS {
+func checkReturnCode(symbol string, code Return) error {
+	if code == Success {
 		return nil
 	}
 
 	return &SmlError{
-		fn:   operation,
-		Code: code,
+		symbol: symbol,
+		code:   code,
 	}
 }

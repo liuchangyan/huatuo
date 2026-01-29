@@ -30,7 +30,7 @@ type library struct {
 	refcount refcount
 }
 
-// global singleton (like libnvml)
+// global singleton
 var libsml = newLibrary()
 
 func newLibrary() *library {
@@ -38,10 +38,6 @@ func newLibrary() *library {
 		path: defaultSmlLibraryPath(),
 	}
 }
-
-/*
- * path helpers
- */
 
 func defaultSmlLibraryPath() string {
 	switch runtime.GOOS {
@@ -51,10 +47,6 @@ func defaultSmlLibraryPath() string {
 		return ""
 	}
 }
-
-/*
- * lifecycle
- */
 
 func (l *library) load() (rerr error) {
 	l.Lock()
@@ -80,7 +72,7 @@ func (l *library) load() (rerr error) {
 	l.handle = handle
 
 	// register all symbols
-	registerSmlLibSymbols(handle)
+	l.registerSmlLibSymbols(handle)
 
 	return nil
 }
@@ -106,7 +98,7 @@ func (l *library) close() (rerr error) {
  * symbol registration
  */
 
-func registerSmlLibSymbols(handle uintptr) {
+func (l *library) registerSmlLibSymbols(handle uintptr) {
 	purego.RegisterLibFunc(&mxSmlInit, handle, "mxSmlInit")
 	purego.RegisterLibFunc(&mxSmlGetErrorString, handle, "mxSmlGetErrorString")
 	purego.RegisterLibFunc(&mxSmlGetMacaVersion, handle, "mxSmlGetMacaVersion")
@@ -131,54 +123,3 @@ func registerSmlLibSymbols(handle uintptr) {
 	purego.RegisterLibFunc(&mxSmlGetCurrentDieDpmIpPerfLevel, handle, "mxSmlGetCurrentDieDpmIpPerfLevel")
 	purego.RegisterLibFunc(&mxSmlGetDieTotalEccErrors, handle, "mxSmlGetDieTotalEccErrors")
 }
-
-// func metaxGetSmlLibraryPath() (string, error) {
-// 	switch runtime.GOOS {
-// 	case "linux":
-// 		return "/opt/mxdriver/lib/libmxsml.so", nil
-// 	default:
-// 		return "", fmt.Errorf("GOOS=%s is not supported", runtime.GOOS)
-// 	}
-// }
-
-// func metaxLoadSmlLibrary() (uintptr, error) {
-// 	path, err := metaxGetSmlLibraryPath()
-// 	if err != nil {
-// 		return 0, fmt.Errorf("failed to get sml library path: %w", err)
-// 	}
-
-// 	libc, err := purego.Dlopen(path, purego.RTLD_NOW|purego.RTLD_GLOBAL)
-// 	if err != nil {
-// 		return 0, fmt.Errorf("failed to open sml library: %w", err)
-// 	}
-
-// 	metaxRegisterSmlLibraryFunctions(libc)
-
-// 	return libc, nil
-// }
-
-// func metaxRegisterSmlLibraryFunctions(libc uintptr) {
-// 	purego.RegisterLibFunc(&mxSmlInit, libc, "mxSmlInit")
-// 	purego.RegisterLibFunc(&mxSmlGetErrorString, libc, "mxSmlGetErrorString")
-// 	purego.RegisterLibFunc(&mxSmlGetMacaVersion, libc, "mxSmlGetMacaVersion")
-// 	purego.RegisterLibFunc(&mxSmlGetDeviceCount, libc, "mxSmlGetDeviceCount")
-// 	purego.RegisterLibFunc(&mxSmlGetPfDeviceCount, libc, "mxSmlGetPfDeviceCount")
-// 	purego.RegisterLibFunc(&mxSmlGetDeviceInfo, libc, "mxSmlGetDeviceInfo")
-// 	purego.RegisterLibFunc(&mxSmlGetDeviceDieCount, libc, "mxSmlGetDeviceDieCount")
-// 	purego.RegisterLibFunc(&mxSmlGetDeviceVersion, libc, "mxSmlGetDeviceVersion")
-// 	purego.RegisterLibFunc(&mxSmlGetBoardPowerInfo, libc, "mxSmlGetBoardPowerInfo")
-// 	purego.RegisterLibFunc(&mxSmlGetPcieInfo, libc, "mxSmlGetPcieInfo")
-// 	purego.RegisterLibFunc(&mxSmlGetPcieThroughput, libc, "mxSmlGetPcieThroughput")
-// 	purego.RegisterLibFunc(&mxSmlGetMetaXLinkInfo_v2, libc, "mxSmlGetMetaXLinkInfo_v2")
-// 	purego.RegisterLibFunc(&mxSmlGetMetaXLinkBandwidth, libc, "mxSmlGetMetaXLinkBandwidth")
-// 	purego.RegisterLibFunc(&mxSmlGetMetaXLinkTrafficStat, libc, "mxSmlGetMetaXLinkTrafficStat")
-// 	purego.RegisterLibFunc(&mxSmlGetMetaXLinkAer, libc, "mxSmlGetMetaXLinkAer")
-// 	purego.RegisterLibFunc(&mxSmlGetDieUnavailableReason, libc, "mxSmlGetDieUnavailableReason")
-// 	purego.RegisterLibFunc(&mxSmlGetDieTemperatureInfo, libc, "mxSmlGetDieTemperatureInfo")
-// 	purego.RegisterLibFunc(&mxSmlGetDieIpUsage, libc, "mxSmlGetDieIpUsage")
-// 	purego.RegisterLibFunc(&mxSmlGetDieMemoryInfo, libc, "mxSmlGetDieMemoryInfo")
-// 	purego.RegisterLibFunc(&mxSmlGetDieClocks, libc, "mxSmlGetDieClocks")
-// 	purego.RegisterLibFunc(&mxSmlGetDieCurrentClocksThrottleReason, libc, "mxSmlGetDieCurrentClocksThrottleReason")
-// 	purego.RegisterLibFunc(&mxSmlGetCurrentDieDpmIpPerfLevel, libc, "mxSmlGetCurrentDieDpmIpPerfLevel")
-// 	purego.RegisterLibFunc(&mxSmlGetDieTotalEccErrors, libc, "mxSmlGetDieTotalEccErrors")
-// }

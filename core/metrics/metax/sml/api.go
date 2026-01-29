@@ -36,4 +36,5 @@ var (
 	GetDieClocksThrottleStatus       = libsml.getDieClocksThrottleStatus
 	GetDieDPMPerformanceLevel        = libsml.getDieDpmPerformanceLevel
 	GetDieECCMemoryInfo              = libsml.getDieEccMemoryInfo
+	GetErrorString                   = libsml.getErrorString
 )
