@@ -1,4 +1,5 @@
-// Copyright 2025 The HuaTuo Authors
+// Copyright 2026 The HuaTuo Authors
+// Copyright 2026 The MetaX Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -140,10 +141,7 @@ func metaxCollectMetrics(ctx context.Context) ([]*metric.Data, error) {
 	return metrics, nil
 }
 
-/*
-   GPU metrics
-*/
-
+// metaxCollectGpuMetrics gathers raw GPU metrics for a single GPU.
 func metaxCollectGpuMetrics(ctx context.Context, gpuId uint32) ([]*metric.Data, error) {
 	var metrics []*metric.Data
 
@@ -326,10 +324,7 @@ func metaxCollectGpuMetrics(ctx context.Context, gpuId uint32) ([]*metric.Data, 
 	return metrics, nil
 }
 
-/*
-   Die metrics
-*/
-
+// metaxCollectDieMetrics collects raw metrics for a specific GPU die.
 func metaxCollectDieMetrics(ctx context.Context, gpuId, dieId uint32, series gpu.Series) ([]*metric.Data, error) {
 	var metrics []*metric.Data
 
@@ -515,10 +510,8 @@ func metaxCollectDieMetrics(ctx context.Context, gpuId, dieId uint32, series gpu
 	return metrics, nil
 }
 
-/*
-   Util
-*/
-
+// getBitsFromLsbToMsb extracts each bit of a uint64 value,
+// ordered from LSB to MSB.
 func getBitsFromLsbToMsb(x uint64) []uint8 {
 	size := 64
 	bits := make([]uint8, size)

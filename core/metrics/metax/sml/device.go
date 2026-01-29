@@ -385,8 +385,7 @@ func (l *library) getDieTemperature(ctx context.Context, gpu, die uint32, sensor
 	return float64(value) / 100, nil
 }
 
-// getDieUtilization returns the utilization of a specific IP on a die
-// 按 GPU 的 die 和硬件 IP 维度，采集各功能模块的利用率，并上报为监控指标。
+// getDieUtilization collects and reports utilization per GPU die and hardware IP.
 func (l *library) getDieUtilization(ctx context.Context, gpuId, dieId uint32, ip gpu.UsageIp) (int32, error) {
 	select {
 	case <-ctx.Done():
@@ -421,8 +420,7 @@ func (l *library) getDieMemoryInfo(ctx context.Context, gpuId, dieId uint32) (de
 	}, nil
 }
 
-// listDieClocks returns clock information for a specific IP on a die
-// 按 die + IP 维度采集 GPU 时钟频率（clock）指标
+// listDieClocks collects clock frequency per GPU die and IP.
 func (l *library) listDieClocks(ctx context.Context, gpuId, dieId uint32, ip gpu.ClockIp) ([]uint32, error) {
 	select {
 	case <-ctx.Done():
@@ -466,8 +464,7 @@ func (l *library) getDieClocksThrottleStatus(ctx context.Context, gpuId, dieId u
 	return value, nil
 }
 
-// getDieDpmPerformanceLevel returns the DPM performance level for a specific IP on a die
-// 按 GPU 的 die 和硬件 IP 维度，采集各功能模块当前的 DPM 性能等级，并导出为监控指标。
+// getDieDpmPerformanceLevel collects current DPM performance level per GPU die and hardware IP, and exports it as a metric.
 func (l *library) getDieDpmPerformanceLevel(ctx context.Context, gpuId, dieId uint32, ip gpu.DpmIp) (uint32, error) {
 	select {
 	case <-ctx.Done():
