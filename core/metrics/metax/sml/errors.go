@@ -56,12 +56,14 @@ func (e *SmlError) Error() string {
 	return fmt.Sprintf("%s failed: %s", e.symbol, e.code.Error())
 }
 
+// IsNotSupported reports whether err represents an unsupported operation.
 func IsNotSupported(err error) bool {
 	var smlErr *SmlError
 	return errors.As(err, &smlErr) &&
 		smlErr.code == ErrorNotSupported
 }
 
+// checkReturnCode converts a return code to an error.
 func checkReturnCode(symbol string, code Return) error {
 	if code == Success {
 		return nil

@@ -19,33 +19,37 @@ import (
 	"huatuo-bamai/core/metrics/metax/device"
 )
 
+// Series represents device product series.
 type Series string
 
 const (
-	Unknown Series = "unknown"
-	SeriesN Series = "mxn"
-	SeriesC Series = "mxc"
-	SeriesG Series = "mxg"
+	Unknown Series = "unknown" // Unknown series.
+	SeriesN Series = "mxn"     // N series.
+	SeriesC Series = "mxc"     // C series.
+	SeriesG Series = "mxg"     // G series.
 )
 
+// Mode represents device virtualization mode.
 type Mode string
 
 const (
-	ModeNative Mode = "native"
-	ModePf     Mode = "pf"
-	ModeVf     Mode = "vf"
+	ModeNative Mode = "native" // Native (non-virtualized).
+	ModePf     Mode = "pf"     // PCIe Physical Function.
+	ModeVf     Mode = "vf"     // PCIe Virtual Function.
 )
 
+// Info describes basic device metadata.
 type Info struct {
-	Series      Series
-	Model       string
-	UUID        string
-	BiosVersion string
-	BDF         string
-	Mode        Mode
-	DieCount    uint32
+	Series      Series // Product series.
+	Model       string // Device model.
+	UUID        string // Device UUID.
+	BiosVersion string // BIOS version.
+	BDF         string // PCI BDF.
+	Mode        Mode   // Virtualization mode.
+	DieCount    uint32 // Number of dies.
 }
 
+// SeriesMap maps device brand to series.
 var SeriesMap = map[device.Brand]Series{
 	device.BrandUnknown: Unknown,
 	device.BrandN:       SeriesN,
@@ -53,84 +57,95 @@ var SeriesMap = map[device.Brand]Series{
 	device.BrandG:       SeriesG,
 }
 
+// ModeMap maps virtualization mode to string mode.
 var ModeMap = map[device.VirtualizationMode]Mode{
 	device.VirtualizationModeNone: ModeNative,
 	device.VirtualizationModePf:   ModePf,
 	device.VirtualizationModeVf:   ModeVf,
 }
 
+// TemperatureSensor represents temperature sensor type.
 type TemperatureSensor uint32
 
 const (
-	TemperatureSensorHotspot TemperatureSensor = iota
+	TemperatureSensorHotspot TemperatureSensor = iota // Hotspot sensor.
 )
 
+// UsageIp represents IP utilization domain.
 type UsageIp uint32
 
 const (
-	UsageIpDla UsageIp = iota // MetaxSmlUsageIpDla only valid for metaxSmlDeviceBrandN.
-	UsageIpVpue
-	UsageIpVpud
-	UsageIpG2d   // MetaxSmlUsageIpG2d only valid for metaxSmlDeviceBrandN.
-	UsageIpXcore // MetaxSmlUsageIpXcore only valid for metaxSmlDeviceBrandC.
+	UsageIpDla   UsageIp = iota // DLA.
+	UsageIpVpue                 // Video encoder.
+	UsageIpVpud                 // Video decoder.
+	UsageIpG2d                  // 2D graphics.
+	UsageIpXcore                // XCore.
 )
 
+// ClockIp represents clock domain.
 type ClockIp uint32
 
 const (
-	ClockIpCsc ClockIp = iota
-	ClockIpDla
-	ClockIpMc
-	ClockIpMc0
-	ClockIpMc1
-	ClockIpVpue
-	ClockIpVpud
-	ClockIpSoc
-	ClockIpDnoc
-	ClockIpG2d
-	ClockIpCcx
-	ClockIpXcore
+	ClockIpCsc   ClockIp = iota // CSC.
+	ClockIpDla                  // DLA.
+	ClockIpMc                   // Memory controller.
+	ClockIpMc0                  // Memory controller 0.
+	ClockIpMc1                  // Memory controller 1.
+	ClockIpVpue                 // Video encoder.
+	ClockIpVpud                 // Video decoder.
+	ClockIpSoc                  // SoC.
+	ClockIpDnoc                 // DNOC.
+	ClockIpG2d                  // 2D graphics.
+	ClockIpCcx                  // CCX.
+	ClockIpXcore                // XCore.
 )
 
+// DpmIp represents DPM domain.
 type DpmIp uint32
 
 const (
-	DpmIpDla DpmIp = iota
-	DpmIpXcore
-	DpmIpMc
-	DpmIpSoc
-	DpmIpDnoc
-	DpmIpVpue
-	DpmIpVpud
-	DpmIpHbm
-	DpmIpG2d
-	DpmIpHbmPower
-	DpmIpCcx
-	DpmIpIpGroup
-	DpmIpDma
-	DpmIpCsc
-	DpmIpEth
-	DpmIpDidt
-	DpmIpReserved
+	DpmIpDla      DpmIp = iota // DLA.
+	DpmIpXcore                 // XCore.
+	DpmIpMc                    // Memory controller.
+	DpmIpSoc                   // SoC.
+	DpmIpDnoc                  // DNOC.
+	DpmIpVpue                  // Video encoder.
+	DpmIpVpud                  // Video decoder.
+	DpmIpHbm                   // HBM.
+	DpmIpG2d                   // 2D graphics.
+	DpmIpHbmPower              // HBM power.
+	DpmIpCcx                   // CCX.
+	DpmIpIpGroup               // IP group.
+	DpmIpDma                   // DMA.
+	DpmIpCsc                   // CSC.
+	DpmIpEth                   // Ethernet.
+	DpmIpDidt                  // DIDT.
+	DpmIpReserved              // Reserved.
 )
 
 var (
+	// UtilizationIpMap maps logical name to usage IP.
 	UtilizationIpMap = map[string]UsageIp{
 		"encoder": UsageIpVpue,
 		"decoder": UsageIpVpud,
 		"xcore":   UsageIpXcore,
 	}
+
+	// ClockIpMap maps logical name to clock IP.
 	ClockIpMap = map[string]ClockIp{
 		"encoder": ClockIpVpue,
 		"decoder": ClockIpVpud,
 		"xcore":   ClockIpXcore,
 		"memory":  ClockIpMc0,
 	}
+
+	// DpmIpMap maps logical name to DPM IP.
 	DpmIpMap = map[string]DpmIp{
 		"xcore": DpmIpXcore,
 	}
 )
 
+// ClocksThrottleBitReasonMap maps throttle reason bit to description.
 var ClocksThrottleBitReasonMap = map[int]string{
 	1:  "idle",
 	2:  "application_limit",

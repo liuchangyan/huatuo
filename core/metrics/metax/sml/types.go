@@ -31,20 +31,25 @@ type SmlSingleMetaXLinkInfo = device.MetaXLinkLinkInfo
 type SmlBoardWayElectricInfo = device.BoardWayElectricInfo
 type SmlEccErrorCount = device.DieEccMemoryInfo
 
+// SmlMetaXLinkTrafficStat describes MetaXLink traffic statistics.
 type SmlMetaXLinkTrafficStat struct {
 	RequestTrafficStat  int64 // requestTrafficStat in bytes.
 	ResponseTrafficStat int64 // responseTrafficStat in bytes.
 }
+
+// SmlMetaXLinkBandwidth describes MetaXLink bandwidth information.
 type SmlMetaXLinkBandwidth struct {
 	RequestBandwidth  int32 // requestBandwidth in MB/s.
 	ResponseBandwidth int32 // responseBandwidth in MB/s.
 }
 
+// SmlDeviceUnavailableReasonInfo describes device unavailable reason.
 type SmlDeviceUnavailableReasonInfo struct {
 	unavailableCode int32
 	_               [64]byte // unavailableReason, not used yet.
 }
 
+// SmlMemoryInfo describes device memory usage.
 type SmlMemoryInfo struct {
 	_         int64 // visVramTotal in KB, not used yet.
 	_         int64 // visVramUse in KB, not used yet.
