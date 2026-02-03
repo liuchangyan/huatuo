@@ -51,7 +51,8 @@ func newMetaxGpuCollector() (*tracing.EventTracingAttr, error) {
 }
 
 func (m *metaxGpuCollector) Update() ([]*metric.Data, error) {
-	metrics, err := metaxCollectMetrics(context.Background())
+	ctx := context.Background()
+	metrics, err := metaxCollectMetrics(ctx)
 	if err != nil {
 		var smlError *sml.SmlError
 		if errors.As(err, &smlError) {
@@ -60,8 +61,7 @@ func (m *metaxGpuCollector) Update() ([]*metric.Data, error) {
 			if err := sml.Init(); err != nil {
 				return nil, fmt.Errorf("failed to re-init sml: %w", err)
 			}
-
-			return metaxCollectMetrics(context.Background())
+			return metaxCollectMetrics(ctx)
 		}
 
 		return nil, err
@@ -75,10 +75,12 @@ func metaxCollectMetrics(ctx context.Context) ([]*metric.Data, error) {
 
 	// SDK version
 	operationGetSdkVersion := "get sdk version"
-	if sdkVersion, err := sml.GetSDKVersion(ctx); sml.IsNotSupported(err) {
+	sdkVersion, err := sml.GetSDKVersion(ctx)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationGetSdkVersion, err)
+		}
 		log.Debugf("operation %s not supported", operationGetSdkVersion)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationGetSdkVersion, err)
 	} else {
 		metrics = append(metrics,
 			metric.NewGaugeData("sdk_info", 1, "GPU SDK info.", map[string]string{
@@ -105,10 +107,12 @@ func metaxCollectMetrics(ctx context.Context) ([]*metric.Data, error) {
 	// Driver version
 	if len(gpus) > 0 {
 		operationGetDriverVersion := "get driver version"
-		if driverVersion, err := sml.GetGPUVersion(ctx, gpus[0], device.DeviceVersionUnitDriver); sml.IsNotSupported(err) {
+		driverVersion, err := sml.GetGPUVersion(ctx, gpus[0], device.DeviceVersionUnitDriver)
+		if err != nil {
+			if !sml.IsNotSupported(err) {
+				return nil, fmt.Errorf("failed to %s: %w", operationGetDriverVersion, err)
+			}
 			log.Debugf("operation %s not supported on gpu 0", operationGetDriverVersion)
-		} else if err != nil {
-			return nil, fmt.Errorf("failed to %s: %w", operationGetDriverVersion, err)
 		} else {
 			metrics = append(metrics,
 				metric.NewGaugeData("driver_info", 1, "GPU driver info.", map[string]string{
@@ -122,6 +126,7 @@ func metaxCollectMetrics(ctx context.Context) ([]*metric.Data, error) {
 	eg, subCtx := errgroup.WithContext(ctx)
 	var mu sync.Mutex
 	for _, gpu := range gpus {
+		gpu := gpu
 		eg.Go(func() error {
 			gpuMetrics, err := metaxCollectGpuMetrics(subCtx, gpu)
 			if err != nil {
@@ -164,10 +169,12 @@ func metaxCollectGpuMetrics(ctx context.Context, gpuId uint32) ([]*metric.Data, 
 
 	// Board electric
 	operationListBoardWayElectricInfos := "list board way electric infos"
-	if boardWayElectricInfos, err := sml.ListGPUBoardWayElectricInfos(ctx, gpuId); sml.IsNotSupported(err) {
+	boardWayElectricInfos, err := sml.ListGPUBoardWayElectricInfos(ctx, gpuId)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationListBoardWayElectricInfos, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d", operationListBoardWayElectricInfos, gpuId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationListBoardWayElectricInfos, err)
 	} else {
 		var totalPower float64
 		for _, info := range boardWayElectricInfos {
@@ -183,10 +190,12 @@ func metaxCollectGpuMetrics(ctx context.Context, gpuId uint32) ([]*metric.Data, 
 
 	// PCIe link
 	operationGetPcieLinkInfo := "get pcie link info"
-	if pcieLinkInfo, err := sml.GetGPUPcieLinkInfo(ctx, gpuId); sml.IsNotSupported(err) {
+	pcieLinkInfo, err := sml.GetGPUPcieLinkInfo(ctx, gpuId)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationGetPcieLinkInfo, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d", operationGetPcieLinkInfo, gpuId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationGetPcieLinkInfo, err)
 	} else {
 		metrics = append(metrics,
 			metric.NewGaugeData("pcie_link_speed_gt_per_second", float64(pcieLinkInfo.Speed), "GPU PCIe current link speed.", map[string]string{
@@ -200,10 +209,12 @@ func metaxCollectGpuMetrics(ctx context.Context, gpuId uint32) ([]*metric.Data, 
 
 	// PCIe throughput
 	operationGetPcieThroughputInfo := "get pcie throughput info"
-	if pcieThroughputInfo, err := sml.GetGPUPcieThroughputInfo(ctx, gpuId); sml.IsNotSupported(err) {
+	pcieThroughputInfo, err := sml.GetGPUPcieThroughputInfo(ctx, gpuId)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationGetPcieThroughputInfo, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d", operationGetPcieThroughputInfo, gpuId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationGetPcieThroughputInfo, err)
 	} else {
 		metrics = append(metrics,
 			metric.NewGaugeData("pcie_receive_bytes_per_second", float64(pcieThroughputInfo.ReceiveRate)*1000*1000, "GPU PCIe receive throughput.", map[string]string{
@@ -217,10 +228,12 @@ func metaxCollectGpuMetrics(ctx context.Context, gpuId uint32) ([]*metric.Data, 
 
 	// MetaXLink link
 	operationListMetaxlinkLinkInfos := "list metaxlink link infos"
-	if metaxlinkLinkInfos, err := sml.ListGPUMetaXLinkLinkInfos(ctx, gpuId); sml.IsNotSupported(err) {
+	metaxlinkLinkInfos, err := sml.ListGPUMetaXLinkLinkInfos(ctx, gpuId)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationListMetaxlinkLinkInfos, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d", operationListMetaxlinkLinkInfos, gpuId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationListMetaxlinkLinkInfos, err)
 	} else {
 		for i, info := range metaxlinkLinkInfos {
 			metrics = append(metrics,
@@ -238,10 +251,12 @@ func metaxCollectGpuMetrics(ctx context.Context, gpuId uint32) ([]*metric.Data, 
 
 	// MetaXLink throughput
 	operationListMetaxlinkThroughputInfos := "list metaxlink throughput infos"
-	if metaxlinkThroughputInfos, err := sml.ListGPUMetaXLinkThroughputInfos(ctx, gpuId); sml.IsNotSupported(err) {
+	metaxlinkThroughputInfos, err := sml.ListGPUMetaXLinkThroughputInfos(ctx, gpuId)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationListMetaxlinkThroughputInfos, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d", operationListMetaxlinkThroughputInfos, gpuId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationListMetaxlinkThroughputInfos, err)
 	} else {
 		for i, info := range metaxlinkThroughputInfos {
 			metrics = append(metrics,
@@ -259,10 +274,12 @@ func metaxCollectGpuMetrics(ctx context.Context, gpuId uint32) ([]*metric.Data, 
 
 	// MetaXLink traffic stat
 	operationListMetaxlinkTrafficStatInfos := "list metaxlink traffic stat infos"
-	if metaxlinkTrafficStatInfos, err := sml.ListGPUMetaXLinkTrafficStatInfos(ctx, gpuId); sml.IsNotSupported(err) {
+	metaxlinkTrafficStatInfos, err := sml.ListGPUMetaXLinkTrafficStatInfos(ctx, gpuId)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationListMetaxlinkTrafficStatInfos, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d", operationListMetaxlinkTrafficStatInfos, gpuId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationListMetaxlinkTrafficStatInfos, err)
 	} else {
 		for i, info := range metaxlinkTrafficStatInfos {
 			metrics = append(metrics,
@@ -280,10 +297,12 @@ func metaxCollectGpuMetrics(ctx context.Context, gpuId uint32) ([]*metric.Data, 
 
 	// MetaXLink AER errors
 	operationListMetaxlinkAerErrorsInfos := "list metaxlink aer errors infos"
-	if metaxlinkAerErrorsInfos, err := sml.ListGPUMetaXLinkAerErrorsInfos(ctx, gpuId); sml.IsNotSupported(err) {
+	metaxlinkAerErrorsInfos, err := sml.ListGPUMetaXLinkAerErrorsInfos(ctx, gpuId)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationListMetaxlinkAerErrorsInfos, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d", operationListMetaxlinkAerErrorsInfos, gpuId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationListMetaxlinkAerErrorsInfos, err)
 	} else {
 		for i, info := range metaxlinkAerErrorsInfos {
 			metrics = append(metrics,
@@ -305,6 +324,7 @@ func metaxCollectGpuMetrics(ctx context.Context, gpuId uint32) ([]*metric.Data, 
 	eg, subCtx := errgroup.WithContext(ctx)
 	var mu sync.Mutex
 	for die := uint32(0); die < gpuInfo.DieCount; die++ {
+		die := die
 		eg.Go(func() error {
 			dieMetrics, err := metaxCollectDieMetrics(subCtx, gpuId, die, gpuInfo.Series)
 			if err != nil {
@@ -330,10 +350,12 @@ func metaxCollectDieMetrics(ctx context.Context, gpuId, dieId uint32, series gpu
 
 	// Die status
 	operationGetDieStatus := "get die status"
-	if dieStatus, err := sml.GetDieStatus(ctx, gpuId, dieId); sml.IsNotSupported(err) {
+	dieStatus, err := sml.GetDieStatus(ctx, gpuId, dieId)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationGetDieStatus, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d die %d", operationGetDieStatus, gpuId, dieId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationGetDieStatus, err)
 	} else {
 		metrics = append(metrics,
 			metric.NewGaugeData("status", float64(dieStatus), "GPU status, 0 means normal, other values means abnormal. Check the documentation to see the exceptions corresponding to each value.", map[string]string{
@@ -345,10 +367,12 @@ func metaxCollectDieMetrics(ctx context.Context, gpuId, dieId uint32, series gpu
 
 	// Temperature
 	operationGetTemperature := "get temperature"
-	if value, err := sml.GetDieTemperature(ctx, gpuId, dieId, gpu.TemperatureSensorHotspot); sml.IsNotSupported(err) {
+	value, err := sml.GetDieTemperature(ctx, gpuId, dieId, gpu.TemperatureSensorHotspot)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationGetTemperature, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d die %d", operationGetTemperature, gpuId, dieId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationGetTemperature, err)
 	} else {
 		metrics = append(metrics,
 			metric.NewGaugeData("temperature_celsius", value, "GPU temperature.", map[string]string{
@@ -361,10 +385,12 @@ func metaxCollectDieMetrics(ctx context.Context, gpuId, dieId uint32, series gpu
 	// Utilization
 	for ip, ipC := range gpu.UtilizationIpMap {
 		operationGetUtilization := fmt.Sprintf("get %s utilization", ip)
-		if value, err := sml.GetDieUtilization(ctx, gpuId, dieId, ipC); sml.IsNotSupported(err) {
+		value, err := sml.GetDieUtilization(ctx, gpuId, dieId, ipC)
+		if err != nil {
+			if !sml.IsNotSupported(err) {
+				return nil, fmt.Errorf("failed to %s: %w", operationGetUtilization, err)
+			}
 			log.Debugf("operation %s not supported on gpu %d die %d", operationGetUtilization, gpuId, dieId)
-		} else if err != nil {
-			return nil, fmt.Errorf("failed to %s: %w", operationGetUtilization, err)
 		} else {
 			metrics = append(metrics,
 				metric.NewGaugeData("utilization_percent", float64(value), "GPU utilization, ranging from 0 to 100.", map[string]string{
@@ -378,10 +404,12 @@ func metaxCollectDieMetrics(ctx context.Context, gpuId, dieId uint32, series gpu
 
 	// Memory
 	operationGetMemoryInfo := "get memory info"
-	if memoryInfo, err := sml.GetDieMemoryInfo(ctx, gpuId, dieId); sml.IsNotSupported(err) {
+	memoryInfo, err := sml.GetDieMemoryInfo(ctx, gpuId, dieId)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationGetMemoryInfo, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d die %d", operationGetMemoryInfo, gpuId, dieId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationGetMemoryInfo, err)
 	} else {
 		metrics = append(metrics,
 			metric.NewGaugeData("memory_total_bytes", float64(memoryInfo.Total)*1024, "Total vram.", map[string]string{
@@ -403,10 +431,12 @@ func metaxCollectDieMetrics(ctx context.Context, gpuId, dieId uint32, series gpu
 		}
 
 		operationListClocks := fmt.Sprintf("list %s clocks", ip)
-		if values, err := sml.ListDieClocks(ctx, gpuId, dieId, ipC); sml.IsNotSupported(err) {
+		values, err := sml.ListDieClocks(ctx, gpuId, dieId, ipC)
+		if err != nil {
+			if !sml.IsNotSupported(err) {
+				return nil, fmt.Errorf("failed to %s: %w", operationListClocks, err)
+			}
 			log.Debugf("operation %s not supported on gpu %d die %d", operationListClocks, gpuId, dieId)
-		} else if err != nil {
-			return nil, fmt.Errorf("failed to %s: %w", operationListClocks, err)
 		} else {
 			metrics = append(metrics,
 				metric.NewGaugeData("clock_mhz", float64(values[0]), "GPU clock.", map[string]string{
@@ -420,10 +450,12 @@ func metaxCollectDieMetrics(ctx context.Context, gpuId, dieId uint32, series gpu
 
 	// Clocks throttle status
 	operationGetClocksThrottleStatus := "get clocks throttle status"
-	if clocksThrottleStatus, err := sml.GetDieClocksThrottleStatus(ctx, gpuId, dieId); sml.IsNotSupported(err) {
+	clocksThrottleStatus, err := sml.GetDieClocksThrottleStatus(ctx, gpuId, dieId)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationGetClocksThrottleStatus, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d die %d", operationGetClocksThrottleStatus, gpuId, dieId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationGetClocksThrottleStatus, err)
 	} else {
 		bits := getBitsFromLsbToMsb(clocksThrottleStatus)
 
@@ -453,10 +485,12 @@ func metaxCollectDieMetrics(ctx context.Context, gpuId, dieId uint32, series gpu
 	// DPM performance level
 	for ip, ipC := range gpu.DpmIpMap {
 		operationGetDpmPerformanceLevel := fmt.Sprintf("get %s dpm performance level", ip)
-		if value, err := sml.GetDieDPMPerformanceLevel(ctx, gpuId, dieId, ipC); sml.IsNotSupported(err) {
+		value, err := sml.GetDieDPMPerformanceLevel(ctx, gpuId, dieId, ipC)
+		if err != nil {
+			if !sml.IsNotSupported(err) {
+				return nil, fmt.Errorf("failed to %s: %w", operationGetDpmPerformanceLevel, err)
+			}
 			log.Debugf("operation %s not supported on gpu %d die %d", operationGetDpmPerformanceLevel, gpuId, dieId)
-		} else if err != nil {
-			return nil, fmt.Errorf("failed to %s: %w", operationGetDpmPerformanceLevel, err)
 		} else {
 			metrics = append(metrics,
 				metric.NewGaugeData("dpm_performance_level", float64(value), "GPU DPM performance level.", map[string]string{
@@ -470,10 +504,12 @@ func metaxCollectDieMetrics(ctx context.Context, gpuId, dieId uint32, series gpu
 
 	// Ecc memory
 	operationGetEccMemoryInfo := "get ecc memory info"
-	if eccMemoryInfo, err := sml.GetDieECCMemoryInfo(ctx, gpuId, dieId); sml.IsNotSupported(err) {
+	eccMemoryInfo, err := sml.GetDieECCMemoryInfo(ctx, gpuId, dieId)
+	if err != nil {
+		if !sml.IsNotSupported(err) {
+			return nil, fmt.Errorf("failed to %s: %w", operationGetEccMemoryInfo, err)
+		}
 		log.Debugf("operation %s not supported on gpu %d die %d", operationGetEccMemoryInfo, gpuId, dieId)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to %s: %w", operationGetEccMemoryInfo, err)
 	} else {
 		metrics = append(metrics,
 			metric.NewCounterData("ecc_memory_errors_total", float64(eccMemoryInfo.SramCorrectableErrorsCount), "GPU ECC memory errors count.", map[string]string{
