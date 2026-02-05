@@ -9,11 +9,12 @@ ENV PATH=$PATH:/usr/lib/llvm15/bin
 
 # Build release version
 FROM base AS build
+ARG BUILD_MODE=static
 ARG BUILD_PATH="/go/huatuo-bamai"
 ARG RUN_PATH="/home/huatuo-bamai"
 WORKDIR ${BUILD_PATH}
 COPY . .
-RUN make && mkdir -p ${RUN_PATH} && cp -rf ${BUILD_PATH}/_output/* ${RUN_PATH}/
+RUN make BUILD_MODE=${BUILD_MODE} && mkdir -p ${RUN_PATH} && cp -rf ${BUILD_PATH}/_output/* ${RUN_PATH}/
 # Disable the elasticsearch and kubelet fetching pods.
 RUN sed -i -e 's/# Address.*/Address=""/g' \
   -e '$a\    KubeletReadOnlyPort=0' \
@@ -26,3 +27,6 @@ RUN apk add --no-cache curl
 COPY --from=build ${RUN_PATH} ${RUN_PATH}
 WORKDIR ${RUN_PATH}
 CMD ["./bin/huatuo-bamai", "--region", "example", "--config", "huatuo-bamai.conf"]
+
+# docker build -t huatuo/huatuo-bamai:static .
+# docker build --build-arg BUILD_MODE=nostatic -t huatuo/huatuo-bamai:nostatic .
