@@ -4,7 +4,7 @@ FROM golang:1.24-alpine3.22 AS base
 # To accelerate the build process, you may uncomment this section.
 # RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 #
-RUN apk add --no-cache make clang15 libbpf-dev curl git
+RUN apk add --no-cache build-base make clang15 libbpf-dev curl git
 ENV PATH=$PATH:/usr/lib/llvm15/bin
 
 # Build release version
