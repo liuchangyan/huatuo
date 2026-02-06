@@ -21,32 +21,60 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push
+      - name: Build and push (static)
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: huatuo/huatuo-bamai:${{ github.ref_name }}
-      - name: Extract files
+          tags: teresaliuchangyan/huatuo-bamai:static-${{ github.ref_name }}
+      - name: Build and push (nostatic)
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            BUILD_MODE=nostatic
+          tags: teresaliuchangyan/huatuo-bamai:${{ github.ref_name }}
+
+      - name: Extract files (nostatic)
         run: |
           # same as docker build platforms
+          set -euo pipefail
           platforms="amd64 arm64"
           for arch in $platforms; do
             tag=${{ github.ref_name }}
             tmpdir="huatuo-${tag}-linux-${arch}"
-
-            docker create --platform linux/${arch} --name tmp-container huatuo/huatuo-bamai:${tag}
-            docker cp tmp-container:/home/huatuo-bamai .
-            docker rm tmp-container
+            tmp-container="tmp-${tag}-${arch}"
+            docker create --platform linux/${arch} --name $tmp-container teresaliuchangyan/huatuo-bamai:${tag}
+            docker cp $tmp-container:/home/huatuo-bamai .
+            docker rm $tmp-container
 
             mv huatuo-bamai $tmpdir
-
             cp LICENSE $tmpdir
-
             file $tmpdir/bin/huatuo-bamai
+            tree $tmpdir
+            tar zcf ${tmpdir}.tar.gz ${tmpdir}
+          done
+      - name: Extract files (static)
+        run: |
+          # same as docker build platforms
+          set -euo pipefail
+          platforms="amd64 arm64"
+          for arch in $platforms; do
+            tag=${{ github.ref_name }}
+            tmpdir="huatuo-${tag}-static-linux-${arch}"
+            tmp-container="tmp-${tag}-static-${arch}"
+            docker create --platform linux/${arch} --name $tmp-container teresaliuchangyan/huatuo-bamai:static-${tag}
+            docker cp $tmp-container:/home/huatuo-bamai .
+            docker rm $tmp-container
 
+            mv huatuo-bamai $tmpdir
+            cp LICENSE $tmpdir
+            file $tmpdir/bin/huatuo-bamai
             tree $tmpdir
             tar zcf ${tmpdir}.tar.gz ${tmpdir}
           done
@@ -60,3 +88,4 @@ jobs:
           body_path: docs/CHANGELOG/CHANGELOG-${{ github.ref_name }}.md
           files: |
             huatuo-${{ github.ref_name }}-linux-*.tar.gz
+            huatuo-${{ github.ref_name }}-static-linux-*.tar.gz
