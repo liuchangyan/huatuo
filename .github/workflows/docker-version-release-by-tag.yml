@@ -40,16 +40,16 @@ jobs:
             BUILD_MODE=nostatic
           tags: teresaliuchangyan/huatuo-bamai:${{ github.ref_name }}
 
-      - name: Extract files (nostatic)
+      - name: Extract files (static)
         run: |
           # same as docker build platforms
           set -euo pipefail
           platforms="amd64 arm64"
           for arch in $platforms; do
             tag=${{ github.ref_name }}
-            tmpdir="huatuo-${tag}-linux-${arch}"
-            tmp-container="tmp-${tag}-${arch}"
-            docker create --platform linux/${arch} --name $tmp-container teresaliuchangyan/huatuo-bamai:${tag}
+            tmpdir="huatuo-${tag}-static-linux-${arch}"
+            tmp-container="tmp_${tag}_static_${arch}"
+            docker create --platform linux/${arch} --name $tmp-container teresaliuchangyan/huatuo-bamai:static-${tag}
             docker cp $tmp-container:/home/huatuo-bamai .
             docker rm $tmp-container
 
@@ -59,16 +59,16 @@ jobs:
             tree $tmpdir
             tar zcf ${tmpdir}.tar.gz ${tmpdir}
           done
-      - name: Extract files (static)
+      - name: Extract files (nostatic)
         run: |
           # same as docker build platforms
           set -euo pipefail
           platforms="amd64 arm64"
           for arch in $platforms; do
             tag=${{ github.ref_name }}
-            tmpdir="huatuo-${tag}-static-linux-${arch}"
-            tmp-container="tmp-${tag}-static-${arch}"
-            docker create --platform linux/${arch} --name $tmp-container teresaliuchangyan/huatuo-bamai:static-${tag}
+            tmpdir="huatuo-${tag}-linux-${arch}"
+            tmp-container="tmp_${tag}_${arch}"
+            docker create --platform linux/${arch} --name $tmp-container teresaliuchangyan/huatuo-bamai:${tag}
             docker cp $tmp-container:/home/huatuo-bamai .
             docker rm $tmp-container
 
