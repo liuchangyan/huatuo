@@ -48,10 +48,15 @@ jobs:
           for arch in $platforms; do
             tag=${{ github.ref_name }}
             tmpdir="huatuo-${tag}-static-linux-${arch}"
-            tmp-container="tmp_${tag}_static_${arch}"
-            docker create --platform linux/${arch} --name $tmp-container teresaliuchangyan/huatuo-bamai:static-${tag}
-            docker cp $tmp-container:/home/huatuo-bamai .
-            docker rm $tmp-container
+            tmp_container="tmp_${tag}_static_${arch}"
+
+            docker create \
+              --platform "linux/${arch}" \
+              --name "${tmp_container}" \
+              teresaliuchangyan/huatuo-bamai:static-${tag}  
+            
+            docker cp "${tmp_container}:/home/huatuo-bamai" .
+            docker rm "${tmp_container}"
 
             mv huatuo-bamai $tmpdir
             cp LICENSE $tmpdir
@@ -67,10 +72,15 @@ jobs:
           for arch in $platforms; do
             tag=${{ github.ref_name }}
             tmpdir="huatuo-${tag}-linux-${arch}"
-            tmp-container="tmp_${tag}_${arch}"
-            docker create --platform linux/${arch} --name $tmp-container teresaliuchangyan/huatuo-bamai:${tag}
-            docker cp $tmp-container:/home/huatuo-bamai .
-            docker rm $tmp-container
+            tmp_container="tmp_${tag}_${arch}"
+
+            docker create \
+              --platform "linux/${arch}" \
+              --name "${tmp_container}" \
+              teresaliuchangyan/huatuo-bamai:${tag}
+            
+            docker cp "${tmp_container}:/home/huatuo-bamai" .
+            docker rm "${tmp_container}"
 
             mv huatuo-bamai $tmpdir
             cp LICENSE $tmpdir
