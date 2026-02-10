@@ -28,7 +28,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: huatuo/huatuo-bamai-static:${{ github.ref_name }}-alpine3.22.0
+          tags: teresaliuchangyan/huatuo-bamai-static:${{ github.ref_name }}-alpine3.22.0
       - name: Build and push (nostatic)
         uses: docker/build-push-action@v2
         with:
@@ -38,7 +38,7 @@ jobs:
           push: true
           build-args: |
             BUILD_MODE=nostatic
-          tags: huatuo/huatuo-bamai:${{ github.ref_name }}-bookworm-slim
+          tags: teresaliuchangyan/huatuo-bamai:${{ github.ref_name }}-bookworm-slim
 
       - name: Extract files (static)
         run: |
@@ -52,7 +52,7 @@ jobs:
             docker create \
               --platform "linux/${arch}" \
               --name "${tmp_container}" \
-              huatuo/huatuo-bamai-static:${tag}-alpine3.22.0
+              teresaliuchangyan/huatuo-bamai-static:${tag}-alpine3.22.0
             
             docker cp "${tmp_container}:/home/huatuo-bamai" .
             docker rm "${tmp_container}"
@@ -74,7 +74,7 @@ jobs:
             docker create \
               --platform "linux/${arch}" \
               --name "${tmp_container}" \
-              huatuo/huatuo-bamai:${tag}-bookworm-slim
+              teresaliuchangyan/huatuo-bamai:${tag}-bookworm-slim
             
             docker cp "${tmp_container}:/home/huatuo-bamai" .
             docker rm "${tmp_container}"
