@@ -28,7 +28,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: teresaliuchangyan/huatuo-bamai-static:${{ github.ref_name }}-alpine3.22.0
+          tags: teresaliuchangyan/huatuo-bamai-static:${{ github.ref_name }}-alpine-3.22.0
       - name: Build and push (nostatic)
         uses: docker/build-push-action@v2
         with:
@@ -47,7 +47,7 @@ jobs:
           platforms="amd64 arm64"
           for arch in $platforms; do
             tag=${{ github.ref_name }}
-            tmpdir="huatuo-${tag}-static-linux-${arch}"
+            tmpdir="huatuo-bamai-${tag}-static-linux-${arch}"
             tmp_container="tmp_${tag}_static_${arch}"
             docker create \
               --platform "linux/${arch}" \
@@ -62,28 +62,7 @@ jobs:
             tree $tmpdir
             tar zcf ${tmpdir}.tar.gz ${tmpdir}
           done
-      - name: Extract files (nostatic)
-        run: |
-          # same as docker build platforms
-          set -euo pipefail
-          platforms="amd64 arm64"
-          for arch in $platforms; do
-            tag=${{ github.ref_name }}
-            tmpdir="huatuo-${tag}-linux-${arch}"
-            tmp_container="tmp_${tag}_${arch}"
-            docker create \
-              --platform "linux/${arch}" \
-              --name "${tmp_container}" \
-              teresaliuchangyan/huatuo-bamai:${tag}-bookworm-slim
-            
-            docker cp "${tmp_container}:/home/huatuo-bamai" .
-            docker rm "${tmp_container}"
-            mv huatuo-bamai $tmpdir
-            cp LICENSE $tmpdir
-            file $tmpdir/bin/huatuo-bamai
-            tree $tmpdir
-            tar zcf ${tmpdir}.tar.gz ${tmpdir}
-          done
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
@@ -93,5 +72,4 @@ jobs:
           token: ${{ secrets.HUATUO_RELEASE_TOKEN }}
           body_path: docs/CHANGELOG/CHANGELOG-${{ github.ref_name }}.md
           files: |
-            huatuo-bamai-${{ github.ref_name }}-linux-*.tar.gz
             huatuo-bamai-${{ github.ref_name }}-static-linux-*.tar.gz
