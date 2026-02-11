@@ -28,7 +28,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: teresaliuchangyan/huatuo-bamai-static:${{ github.ref_name }}-alpine-3.22.0
+          tags: teresaliuchangyan/huatuo-bamai-static:${{ github.ref_name }}-alpine3.22.0
       - name: Build and push (nostatic)
         uses: docker/build-push-action@v2
         with:
